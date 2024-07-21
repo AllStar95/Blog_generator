@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai Blog Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
+
+    <style>
+          @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to { 
+                transform: rotate(360deg);
+            }
+        }
+         
+        
+         @-webkit-keyframes rotate {
+            from {
+                -webkit-transform: rotate(0deg);
+            }
+            to { 
+                -webkit-transform: rotate(360deg);
+            }
+        }
+        
+        .load {
+            width: 100px;
+            height: 100px;
+            margin: 110px auto 0;
+            border:solid 10px #8822aa;
+            border-radius: 50%;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+             -webkit-transition: all 0.5s ease-in;
+            -webkit-animation-name:             rotate; 
+            -webkit-animation-duration:         1.0s; 
+            -webkit-animation-iteration-count:  infinite;
+            -webkit-animation-timing-function: linear;
+                
+                 transition: all 0.5s ease-in;
+            animation-name:             rotate; 
+            animation-duration:         1.0s; 
+            animation-iteration-count:  infinite;
+            animation-timing-function: linear; 
+        }
+    </style>
+
+</head>
+<body class="flex flex-col min-h-screen bg-gray-100, font-sans antialiased">
+    <!--Navbar-->
+    <nav class="bg-purple-600 p-4 text-pink-200 flex justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">AI Blog Generator</h1>
+        </div>
+        <div>
+            <a href="logout" class="text-pink-200 hover:underline">Logout</a>
+        </div>
+    </nav>
+    
+    <br>
+    <br>
+    
+    <!-- Main -->
+    <div class="flex-grow container mx-auto mt-10 px-4 sm:px-0">
+        <div class="max-w-3xl mx-auto bg-blue-100 p-6 rounded-lg shadow-md transition-transform transform hover:scale-105 flex flex-col">
+
+            <!-- IntroSection -->
+            <div class= "text-center">
+                <h2 class="text-2xl font-semibold mb-4">Welcome to AI Blog Generator</h2>
+                <p class="text-gray-700">
+                    By leveraging AI, this tool can automatically generate engaging blog posts that summarize and enhance the information presented in YouTube videos. Such a system can transform video content into comprehensive blogs, making information more accessible and enriching the overall user experience.
+                </p>
+            </div>
+            
+            <br>
+
+            <!-- YouTubesection -->
+            <div>
+                <h2 class="text-xl mb-4 font-semibold">Enter YouTube Video Link</h2>
+                <div class="flex space-x-4">
+                    <input id="youtubeLink" type="url" placeholder="Paste YouTube Link..." class="flex-grow p-2 border border-blue-400 rounded-l-md">
+                    <button id="generateBlogButton" class="bg-indigo-600 text-white px-4 py-2 rounded-4-md hover:bg-indigo-700 transition-colors">Generate</button>
+                </div>
+            </div>
+
+            <!-- Section-for-loading-circle -->
+             <div style="display: none;" id="loading-circle" class="load"></div>
+
+            <!-- Generated Blog DIsplay Section -->
+             <section class="mt-10 flex-grow">
+                <h2 class="text-xl mb-4 font-semibold">Generated Blog Article</h2>
+                <div id="blogContent" class="mt-2 text-gray-700 spacy-y-4">
+                </div>
+             </section>
+        </div>
+    </div>
+    <footer class="text-center p-4 text-black mt-4">
+        Powered By &copy;<a href="https://github.com/AllStar95">AllStar95</a>
+    </footer>
+
+    <script>
+
+    </script>
+</body>
+</html>
