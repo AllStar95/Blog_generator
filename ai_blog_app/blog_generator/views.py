@@ -2,12 +2,40 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+from pytube import YouTube
 
 # Create your views here.
 @login_required
 def index(request):
     return render(request,'index.html')
+
+@csrf_exempt
+def generate_blog(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            yt_link = data['link']
+            return JsonResponse({'content': yt_link})
+        except {KeyError, json.JSONDecodeError}:
+            return JsonResponse({'error': 'Invalid data sent'}, status=400)
+        
+        # get yt title
+
+        # get transcript
+
+        # use openAI to geenrate blog
+        
+        # save blog article to db
+
+        # return blog article as a response
+
+
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 def user_login(request):
     if request.method == 'POST':
