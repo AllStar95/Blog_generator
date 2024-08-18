@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
 from pytube import YouTube
+import yt_dlp
 import os
 import assemblyai as aai
 import openai
@@ -53,69 +54,75 @@ def generate_blog(request):
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 def yt_title(link):
-    yt = YouTube(link)
-    title = yt.title
-    return title
+    try:
+        with yt_dlp.YoutubeDL() as ydl:
+            info_dict = ydl.extract_info(link, download=False)
+            title = info_dict.get('title', None)
+            if title:
+                return title
+    except Exception as e:
+        logger.error(f"Error retrieving title from YouTube: {e}")
+        return None
 
 def download_audio(link):
     try:
-        # Initialize YouTube object
-        yt = YouTube(link)
-        
-        # Filter audio-only streams and get the first one
-        video = yt.streams.filter(only_audio=True).first()
-        if not video:
-            logger.error("No audio stream available")
-            raise Exception("No audio stream available")
-
-        # Download the file to the specified output path
-        out_file = video.download(output_path=settings.MEDIA_ROOT)
-
-        # Change file extension to .mp3
-        base, ext = os.path.splitext(out_file)
-        new_file = base + '.mp3'
-        os.rename(out_file, new_file)
-
-        return new_file
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(settings.MEDIA_ROOT, '%(title)s.%(ext)s'),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'quiet': True,
+            'ffmpeg_location': 'C:\\ffmpeg\\ffmpeg-master-latest-win64-gpl-shared\\bin'  # Replace this with the path to your ffmpeg executable
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(link, download=True)
+            audio_file = ydl.prepare_filename(info_dict).replace('.webm', '.mp3').replace('.m4a', '.mp3')
+            logger.info(f"Audio file downloaded: {audio_file}")
+            return audio_file
     except Exception as e:
-        logger.error(f"An error occurred while downloading audio: {e}")
+        logger.error(f"Error downloading audio with yt-dlp: {e}")
         return None
+
 
 def get_transcription(link):
     audio_file = download_audio(link)
-    
-    if audio_file is None:
-        print("Error: Audio download failed.")
+    if not audio_file:
+        logger.error("No audio file returned from download_audio")
         return None
 
     # Ensure you set the correct API key
-    aai.settings.api_key = "your_actual_api_key_here"
+    aai.settings.api_key = ""
+
+    transcriber = aai.Transcriber()
+    try:
+        transcript = transcriber.transcribe(audio_file)
+        return transcript.text
+    except Exception as e:
+        logger.error(f"Error transcribing audio with AssemblyAI: {e}")
+        return None
+def generate_blog_from_transcription(transcription):
+    openai.api_key = ""  # Set your OpenAI API key here
+
+    prompt = f"Based on the following transcript from a YouTube video, write a comprehensive blog article. The content should be based on the transcript but formatted as a proper blog article:\n\n{transcription}\n\nArticle:"
 
     try:
-        transcriber = aai.Transcriber()
-        # Assuming the `transcribe` method takes the file path as an argument
-        transcript = transcriber.transcribe(audio_file)
-        return transcript.get('text', 'No transcription available')
-
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Change to "gpt-4" if you have access
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that writes blog articles."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1000
+        )
+        generated_content = response.choices[0].message['content'].strip()
+        return generated_content
     except Exception as e:
-        print(f"Error: An error occurred during transcription - {e}")
+        logger.error(f"Error generating blog content with OpenAI: {e}")
         return None
-
-def generate_blog_from_transcription(transcription):
-    openai.api_key = "your-api-key"
-
-    prompt = f"Based on the following transcript from a YouTube video, write a comprehensive blog article, write it based on the transcript, but dont make it look like a youtube video, make it look like a proper blog article:\n\n{transcription}\n\nArticle:"
-
-
-    response = openai.Completion.create(
-        model = "text-davinci-003",
-        prompt = prompt,
-        max_tokens = 1000
-    )
-
-    generated_content = response.choices[0].text.strip()
-
-    return generated_content
+    
 def user_login(request):
     if request.method == 'POST':
         username = request.POST['username']
